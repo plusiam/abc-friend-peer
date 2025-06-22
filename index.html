@@ -391,6 +391,16 @@
             line-height: 1.6;
             color: #333;
         }
+
+        /* 실제 상황 표시 스타일 */
+        .current-situation {
+            background: linear-gradient(135deg, #fef3c7, #fed7aa);
+            border: 2px solid #f59e0b;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body class="p-4">
@@ -549,37 +559,43 @@
                         </button>
                     </div>
                     
+                    <!-- 현재 상황 표시 -->
+                    <div id="current-situation-display" class="current-situation hidden">
+                        <div class="font-bold text-orange-700 mb-2">🎯 현재 상황:</div>
+                        <div id="current-situation-text" class="text-gray-700"></div>
+                    </div>
+                    
                     <div class="bg-blue-50 p-4 rounded-lg mb-4">
                         <div class="text-base md:text-lg font-medium text-blue-800 leading-relaxed">
-                            <!-- A: 사실/상황 선택 -->
+                            <!-- A: 사실/상황은 자동으로 표시됨 -->
                             <div class="mb-3">
-                                <label class="font-bold text-red-600 block mb-2">A - 사실/상황:</label>
-                                <select id="situation-select" class="w-full p-2 border rounded bg-white">
-                                    <option value="">상황 선택...</option>
-                                </select>
+                                <label class="font-bold text-red-600 block mb-2">A - 사실/상황 (자동 입력됨):</label>
+                                <div id="auto-situation-display" class="bg-red-50 p-2 rounded text-red-700 text-sm">
+                                    먼저 고민을 선택하거나 입력해주세요.
+                                </div>
                             </div>
                             
                             <!-- B: 생각/신념 선택 -->
                             <div class="mb-3">
-                                <label class="font-bold text-yellow-600 block mb-2">B - 생각/신념:</label>
+                                <label class="font-bold text-yellow-600 block mb-2">B - 생각/신념 (선택사항):</label>
                                 <select id="thought-select" class="w-full p-2 border rounded bg-white">
-                                    <option value="">생각 선택...</option>
+                                    <option value="">선택 안함</option>
                                 </select>
                             </div>
                             
                             <!-- C: 감정/결과 선택 -->
                             <div class="mb-3">
-                                <label class="font-bold text-blue-600 block mb-2">C - 감정/결과:</label>
+                                <label class="font-bold text-blue-600 block mb-2">C - 감정/결과 (선택사항):</label>
                                 <select id="feeling-select" class="w-full p-2 border rounded bg-white">
-                                    <option value="">감정 선택...</option>
+                                    <option value="">선택 안함</option>
                                 </select>
                             </div>
                             
                             <!-- 마무리 문장 -->
                             <div>
-                                <label class="font-bold text-purple-600 block mb-2">마무리:</label>
+                                <label class="font-bold text-purple-600 block mb-2">마무리 (선택사항):</label>
                                 <select id="closing-select" class="w-full p-2 border rounded bg-white">
-                                    <option value="">마무리 선택...</option>
+                                    <option value="">선택 안함</option>
                                 </select>
                             </div>
                         </div>
@@ -589,7 +605,7 @@
                     <div>
                         <label class="font-bold text-gray-700 block mb-2">✨ 완성된 공감 표현:</label>
                         <div id="empathy-preview" class="preview-box">
-                            <span class="text-gray-500 italic">위에서 선택하면 자동으로 공감 표현이 만들어집니다</span>
+                            <span class="text-gray-500 italic">위에서 상황을 입력하면 자동으로 공감 표현이 만들어집니다</span>
                         </div>
                     </div>
                     
@@ -602,7 +618,7 @@
                     <!-- 자동 완성 버튼 -->
                     <div class="text-center mt-4">
                         <button id="auto-complete-empathy" class="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-lg btn-hover text-lg pulse-animation">
-                            ⚡ 자동으로 공감 표현 완성하기
+                            ⚡ 추천 공감 표현 자동 생성하기
                         </button>
                         <div class="text-xs text-gray-500 mt-2">현재 상황에 맞는 공감 표현을 자동으로 만들어드려요!</div>
                     </div>
@@ -814,8 +830,6 @@
             data: {
                 emotions: ['😢 슬픔', '😠 화남', '😟 걱정', '😞 실망', '😨 두려움', '😳 부끄러움', '😔 서글픔', '😤 답답함'],
                 
-                situations: ['그런 상황에서', '시험 성적이 안 나왔을 때', '친구와 다툼이 있을 때', '발표를 앞두고 있을 때', '새로운 환경에 적응할 때', '누군가 내 마음을 몰라줄 때'],
-                
                 thoughts: ['정말 힘들었겠구나', '많이 당황스러웠겠어', '어떻게 해야 할지 막막했겠어', '마음이 복잡했겠구나', '누구나 그런 상황이면 그렇게 느낄 수 있어'],
                 
                 feelings: ['속상한 마음이 들었겠다', '화가 났겠다', '걱정이 많았겠다', '실망했겠다', '두려웠겠다', '부끄러웠겠다', '서글펐겠다', '답답했겠다'],
@@ -968,7 +982,6 @@
             
             // 공감 표현 옵션 로드
             loadEmpathyOptions() {
-                this.loadSelectOptions('situation-select', this.data.situations);
                 this.loadSelectOptions('thought-select', this.data.thoughts);
                 this.loadSelectOptions('feeling-select', this.data.feelings);
                 this.loadSelectOptions('closing-select', this.data.closings);
@@ -1041,8 +1054,7 @@
                 // 감정 추가
                 this.addClickListener('add-emotion-btn', () => this.addCustomEmotion());
                 
-                // 공감 표현
-                this.addChangeListener('situation-select', () => this.updateEmpathyPreview());
+                // 공감 표현 - 사용자 입력 기반으로 변경
                 this.addChangeListener('thought-select', () => this.updateEmpathyPreview());
                 this.addChangeListener('feeling-select', () => this.updateEmpathyPreview());
                 this.addChangeListener('closing-select', () => this.updateEmpathyPreview());
@@ -1192,6 +1204,7 @@
                     document.getElementById('selected-worry-abc').classList.add('hidden');
                     this.state.selectedSituation = '';
                     this.state.currentABC = { a: '', b: '', c: '' };
+                    this.updateCurrentSituation();
                     return;
                 }
                 
@@ -1211,10 +1224,27 @@
                     
                     this.clearPreviousContent();
                     this.autoSelectEmotions(worry);
+                    this.updateCurrentSituation();
                     
                     // 3단계에 상황별 체크리스트 로드
                     this.loadSituationBasedChecklists(category);
                 }
+            },
+
+            // 현재 상황 업데이트 - 2단계에서 표시
+            updateCurrentSituation() {
+                const display = document.getElementById('auto-situation-display');
+                const currentSituation = this.state.currentABC.a || '먼저 고민을 선택하거나 입력해주세요.';
+                
+                if (display) {
+                    display.textContent = currentSituation;
+                    display.className = this.state.currentABC.a ? 
+                        'bg-orange-50 p-2 rounded text-orange-700 text-sm' : 
+                        'bg-red-50 p-2 rounded text-red-700 text-sm';
+                }
+                
+                // 공감 표현 미리보기도 업데이트
+                this.updateEmpathyPreview();
             },
             
             // 이전 내용 초기화
@@ -1231,6 +1261,12 @@
                 document.getElementById('help-suggestions').value = '';
                 document.getElementById('personal-encouragement').value = '';
                 document.getElementById('promise-checkbox').checked = false;
+                
+                // 공감 표현 드롭다운 초기화
+                ['thought-select', 'feeling-select', 'closing-select'].forEach(id => {
+                    const select = document.getElementById(id);
+                    if (select) select.selectedIndex = 0;
+                });
             },
             
             // 감정 자동 선택
@@ -1332,24 +1368,49 @@
                 this.state.currentCategory = '기타';
                 
                 this.clearPreviousContent();
+                this.updateCurrentSituation();
                 // 기본 체크리스트 로드
                 this.loadSituationBasedChecklists('학교생활');
                 alert('✅ 고민이 저장되었어요! 이제 다음 단계로 넘어가세요.');
                 this.goToStep(1);
             },
             
-            // 공감 표현 미리보기 업데이트
+            // 공감 표현 미리보기 업데이트 - 개선된 버전
             updateEmpathyPreview() {
-                const situation = document.getElementById('situation-select').value;
                 const thought = document.getElementById('thought-select').value;
                 const feeling = document.getElementById('feeling-select').value;
                 const closing = document.getElementById('closing-select').value;
+                const currentSituation = this.state.currentABC.a;
                 
                 const preview = document.getElementById('empathy-preview');
                 const textarea = document.getElementById('empathy-text');
                 
-                if (situation && thought && feeling && closing) {
-                    const empathyText = `${situation} ${thought}. ${feeling}. ${closing}`;
+                if (!currentSituation) {
+                    preview.innerHTML = '<span class="text-gray-500 italic">먼저 상황을 입력해주세요</span>';
+                    return;
+                }
+                
+                // 선택된 것들만 조합
+                const parts = [];
+                
+                // 상황 설명으로 시작
+                parts.push(`${currentSituation}으로`);
+                
+                if (thought) {
+                    parts.push(thought);
+                }
+                
+                if (feeling) {
+                    parts.push(feeling);
+                }
+                
+                if (closing) {
+                    parts.push(closing);
+                }
+                
+                // 최소 상황은 있어야 함
+                if (parts.length > 0) {
+                    const empathyText = parts.join('. ') + '.';
                     preview.innerHTML = empathyText;
                     textarea.value = empathyText;
                 } else {
@@ -1361,23 +1422,29 @@
             
             // 자동 공감 표현 완성
             autoCompleteEmpathy() {
-                const selects = ['situation-select', 'thought-select', 'feeling-select', 'closing-select'];
+                if (!this.state.currentABC.a) {
+                    alert('먼저 고민 상황을 선택하거나 입력해주세요!');
+                    return;
+                }
                 
-                selects.forEach((selectId, index) => {
+                // 각 드롭다운에서 첫 번째 옵션(선택 안함 제외) 자동 선택
+                const selects = ['thought-select', 'feeling-select', 'closing-select'];
+                
+                selects.forEach(selectId => {
                     const select = document.getElementById(selectId);
-                    if (!select.value) {
-                        select.selectedIndex = 1;
+                    if (!select.value && select.options.length > 1) {
+                        select.selectedIndex = 1; // 첫 번째 실제 옵션 선택
                     }
                 });
                 
                 this.updateEmpathyPreview();
                 
                 const button = document.getElementById('auto-complete-empathy');
-                button.textContent = '✅ 완성되었어요!';
+                button.textContent = '✅ 자동 완성되었어요!';
                 button.classList.remove('pulse-animation');
                 
                 setTimeout(() => {
-                    button.textContent = '⚡ 자동으로 공감 표현 완성하기';
+                    button.textContent = '⚡ 추천 공감 표현 자동 생성하기';
                     button.classList.add('pulse-animation');
                 }, 2000);
             },
@@ -1418,9 +1485,9 @@
                 
                 this.updateStepButtons();
                 
-                // 2단계 특별 처리
-                if (step === 2 && this.state.currentABC.a) {
-                    this.addCustomSituationToDropdown(this.state.currentABC.a);
+                // 2단계 특별 처리 - 현재 상황 업데이트
+                if (step === 2) {
+                    this.updateCurrentSituation();
                 }
 
                 // 3단계 특별 처리 - 체크리스트 로드
@@ -1428,31 +1495,6 @@
                     const category = this.state.currentCategory || '학교생활';
                     this.loadSituationBasedChecklists(category);
                 }
-            },
-            
-            // 사용자 정의 상황 드롭다운 추가
-            addCustomSituationToDropdown(situationText) {
-                const select = document.getElementById('situation-select');
-                if (!select || !situationText) return;
-                
-                const exists = Array.from(select.options).some(option => 
-                    option.value === situationText
-                );
-                
-                if (!exists) {
-                    const option = document.createElement('option');
-                    option.value = situationText;
-                    option.textContent = situationText.length > 60 ? 
-                        situationText.substring(0, 60) + '...' : situationText;
-                    
-                    if (select.children.length > 1) {
-                        select.insertBefore(option, select.children[1]);
-                    } else {
-                        select.appendChild(option);
-                    }
-                }
-                
-                select.value = situationText;
             },
             
             // 단계 버튼 상태 업데이트
@@ -1927,6 +1969,7 @@
                 });
                 
                 this.updateSelectedEmotions();
+                this.updateCurrentSituation();
                 this.switchInputMode('example');
                 
                 // 기본 체크리스트 로드
@@ -1955,11 +1998,11 @@
             // 공감 표현 초기화
             resetEmpathy() {
                 if (confirm('작성한 공감 표현을 지우시겠어요?')) {
-                    document.querySelectorAll('#situation-select, #thought-select, #feeling-select, #closing-select').forEach(select => {
+                    document.querySelectorAll('#thought-select, #feeling-select, #closing-select').forEach(select => {
                         select.selectedIndex = 0;
                     });
                     document.getElementById('empathy-text').value = '';
-                    document.getElementById('empathy-preview').innerHTML = '<span class="text-gray-500 italic">위에서 선택하면 자동으로 공감 표현이 만들어집니다</span>';
+                    this.updateEmpathyPreview();
                     this.updateStepButtons();
                     this.showNotification('🔄 공감 표현이 초기화되었습니다');
                 }
@@ -2080,6 +2123,7 @@
                     
                     // UI 업데이트
                     this.updateSelectedEmotions();
+                    this.updateCurrentSituation();
                     document.querySelectorAll('.emotion-btn').forEach(btn => {
                         if (this.state.selectedEmotions.includes(btn.textContent)) {
                             btn.classList.add('selected');
