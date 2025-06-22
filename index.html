@@ -17,9 +17,9 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 외부 라이브러리 비동기 로딩 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" async></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" async></script>
+    <!-- 외부 라이브러리 - 순서 보장을 위해 async 제거 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <!-- 한글 폰트 preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -259,18 +259,59 @@
             animation: pulse 2s infinite;
         }
         
-        /* 인쇄 스타일 */
+        /* 인쇄 스타일 - 크게 개선 */
         @media print {
             .no-print {
                 display: none !important;
             }
             
             body {
-                background-color: white;
+                background-color: white !important;
+                font-size: 12pt;
+                line-height: 1.4;
+                color: black !important;
             }
             
             .card {
                 page-break-inside: avoid;
+                box-shadow: none !important;
+                border: 1px solid #ddd;
+                background: white !important;
+            }
+            
+            #result-screen {
+                padding: 0 !important;
+            }
+            
+            .title-font {
+                font-size: 18pt !important;
+                color: black !important;
+            }
+            
+            /* 인쇄용 색상 조정 */
+            .bg-green-50, .bg-blue-50, .bg-purple-50, .bg-orange-50, .bg-yellow-50 {
+                background-color: #f5f5f5 !important;
+            }
+            
+            .text-green-700, .text-blue-700, .text-purple-700, .text-orange-700 {
+                color: black !important;
+            }
+            
+            /* 그리드 레이아웃 인쇄 최적화 */
+            .grid {
+                display: block !important;
+            }
+            
+            .grid > div {
+                display: block !important;
+                margin-bottom: 10pt;
+                page-break-inside: avoid;
+            }
+            
+            /* 페이지 여백 */
+            @page {
+                margin: 1.5cm;
+                size: A4;
             }
         }
         
@@ -340,6 +381,15 @@
         .notification.show {
             transform: translateY(0);
             opacity: 1;
+        }
+
+        /* PDF 전용 스타일 */
+        .pdf-container {
+            background: white;
+            padding: 20px;
+            font-family: 'Noto Sans KR', sans-serif;
+            line-height: 1.6;
+            color: #333;
         }
     </style>
 </head>
@@ -1036,7 +1086,7 @@
                 
                 // 결과 저장 및 다운로드
                 this.addClickListener('save-result-btn', () => this.saveAndShowResult());
-                this.addClickListener('print-result-btn', () => window.print());
+                this.addClickListener('print-result-btn', () => this.printResult());
                 this.addClickListener('download-image-btn', () => this.downloadAsImage());
                 this.addClickListener('download-pdf-btn', () => this.downloadAsPDF());
                 this.addClickListener('new-consultation-btn', () => this.startNewConsultation());
@@ -1619,59 +1669,221 @@
                 
                 document.getElementById('result-content').innerHTML = resultContent;
             },
+
+            // 인쇄 기능 개선
+            printResult() {
+                window.print();
+            },
             
-            // 이미지로 다운로드
-            downloadAsImage() {
+            // 이미지로 다운로드 - 개선된 버전
+            async downloadAsImage() {
                 if (typeof html2canvas === 'undefined') {
-                    alert('이미지 다운로드 기능을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
-                    return;
+                    this.showNotification('⏳ 이미지 생성 도구를 로딩 중입니다...');
+                    // 라이브러리가 로드될 때까지 대기
+                    let attempts = 0;
+                    while (typeof html2canvas === 'undefined' && attempts < 30) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        attempts++;
+                    }
+                    
+                    if (typeof html2canvas === 'undefined') {
+                        alert('이미지 생성 기능을 불러올 수 없습니다. 페이지를 새로고침 후 다시 시도해주세요.');
+                        return;
+                    }
                 }
                 
-                const resultElement = document.getElementById('result-screen');
-                const buttons = resultElement.querySelector('.no-print');
-                
-                // 버튼 임시 숨기기
-                buttons.style.display = 'none';
-                
-                html2canvas(resultElement, {
-                    scale: 2,
-                    logging: false,
-                    useCORS: true
-                }).then(canvas => {
+                try {
+                    this.showNotification('📷 이미지를 생성하고 있습니다...');
+                    
+                    const resultElement = document.getElementById('result-screen');
+                    const buttons = resultElement.querySelector('.no-print');
+                    
+                    // 버튼 임시 숨기기
+                    if (buttons) buttons.style.display = 'none';
+                    
+                    const canvas = await html2canvas(resultElement, {
+                        scale: 2,
+                        logging: false,
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        width: resultElement.scrollWidth,
+                        height: resultElement.scrollHeight
+                    });
+                    
                     const link = document.createElement('a');
                     link.download = `ABC친구도우미_상담결과_${new Date().toISOString().split('T')[0]}.png`;
-                    link.href = canvas.toDataURL();
+                    link.href = canvas.toDataURL('image/png');
                     link.click();
                     
                     // 버튼 다시 표시
-                    buttons.style.display = '';
+                    if (buttons) buttons.style.display = '';
                     
                     this.showNotification('📷 이미지가 다운로드되었습니다!');
-                }).catch(error => {
+                } catch (error) {
                     console.error('이미지 생성 오류:', error);
-                    alert('이미지 생성에 실패했습니다.');
-                    buttons.style.display = '';
-                });
+                    alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');
+                    
+                    // 버튼 다시 표시
+                    const buttons = document.querySelector('#result-screen .no-print');
+                    if (buttons) buttons.style.display = '';
+                }
             },
             
-            // PDF로 다운로드
-            downloadAsPDF() {
+            // PDF로 다운로드 - 크게 개선된 버전
+            async downloadAsPDF() {
                 if (typeof window.jspdf === 'undefined') {
-                    alert('PDF 다운로드 기능을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
-                    return;
+                    this.showNotification('⏳ PDF 생성 도구를 로딩 중입니다...');
+                    // 라이브러리가 로드될 때까지 대기
+                    let attempts = 0;
+                    while (typeof window.jspdf === 'undefined' && attempts < 30) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        attempts++;
+                    }
+                    
+                    if (typeof window.jspdf === 'undefined') {
+                        alert('PDF 생성 기능을 불러올 수 없습니다. 페이지를 새로고침 후 다시 시도해주세요.');
+                        return;
+                    }
                 }
                 
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                // 간단한 PDF 생성
-                doc.text('ABC 친구 도우미 - 상담 결과', 20, 20);
-                doc.text(`상담 일시: ${this.state.consultationData.timestamp}`, 20, 30);
-                
-                // PDF 다운로드
-                doc.save(`ABC친구도우미_상담결과_${new Date().toISOString().split('T')[0]}.pdf`);
-                
-                this.showNotification('📄 PDF가 다운로드되었습니다!');
+                try {
+                    this.showNotification('📄 PDF를 생성하고 있습니다...');
+                    
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('p', 'mm', 'a4');
+                    const data = this.state.consultationData;
+                    
+                    // 여백 설정
+                    const margin = 20;
+                    const pageWidth = 210 - (margin * 2);
+                    let currentY = margin;
+                    
+                    // 제목
+                    doc.setFontSize(18);
+                    doc.text('🌈 ABC 친구 도우미 - 상담 결과', margin, currentY);
+                    currentY += 10;
+                    
+                    // 날짜
+                    doc.setFontSize(10);
+                    doc.text(`상담 일시: ${data.timestamp}`, margin, currentY);
+                    currentY += 15;
+                    
+                    // 기본 정보
+                    doc.setFontSize(12);
+                    doc.text(`상담자: ${data.counselorName}`, margin, currentY);
+                    doc.text(`상담받는 친구: ${data.clientName}`, margin + 90, currentY);
+                    currentY += 10;
+                    
+                    // 상담 주제
+                    doc.setFontSize(11);
+                    doc.text('🎯 상담 주제', margin, currentY);
+                    currentY += 6;
+                    const splitSituation = doc.splitTextToSize(data.situation, pageWidth);
+                    doc.text(splitSituation, margin, currentY);
+                    currentY += splitSituation.length * 5 + 10;
+                    
+                    // ABC 분석
+                    doc.text('🔍 ABC 분석', margin, currentY);
+                    currentY += 8;
+                    
+                    doc.setFontSize(10);
+                    const abcData = [
+                        `A(사실): ${data.abc.a || '(작성되지 않음)'}`,
+                        `B(생각): ${data.abc.b || '(작성되지 않음)'}`,
+                        `C(결과): ${data.abc.c || '(작성되지 않음)'}`
+                    ];
+                    
+                    abcData.forEach(item => {
+                        const splitText = doc.splitTextToSize(item, pageWidth);
+                        doc.text(splitText, margin, currentY);
+                        currentY += splitText.length * 4 + 3;
+                    });
+                    currentY += 10;
+                    
+                    // 1단계: 마음 공감하기
+                    doc.setFontSize(11);
+                    doc.text('💚 1단계: 마음 공감하기', margin, currentY);
+                    currentY += 6;
+                    doc.setFontSize(10);
+                    const emotions = data.emotions.length > 0 ? data.emotions.join(', ') : '선택된 감정 없음';
+                    const splitEmotions = doc.splitTextToSize(`친구의 감정: ${emotions}`, pageWidth);
+                    doc.text(splitEmotions, margin, currentY);
+                    currentY += splitEmotions.length * 4 + 8;
+                    
+                    // 2단계: 공감 표현하기
+                    doc.setFontSize(11);
+                    doc.text('💬 2단계: 공감 표현하기', margin, currentY);
+                    currentY += 6;
+                    doc.setFontSize(10);
+                    const empathy = data.empathy || '(작성되지 않음)';
+                    const splitEmpathy = doc.splitTextToSize(empathy, pageWidth);
+                    doc.text(splitEmpathy, margin, currentY);
+                    currentY += splitEmpathy.length * 4 + 8;
+                    
+                    // 새 페이지가 필요한지 확인
+                    if (currentY > 250) {
+                        doc.addPage();
+                        currentY = margin;
+                    }
+                    
+                    // 3단계: 도움 찾기
+                    doc.setFontSize(11);
+                    doc.text('✨ 3단계: 도움 찾기', margin, currentY);
+                    currentY += 8;
+                    
+                    doc.setFontSize(10);
+                    doc.text('새로운 생각:', margin, currentY);
+                    currentY += 4;
+                    const newThinking = data.solutions.newThinking || '(작성되지 않음)';
+                    const splitThinking = doc.splitTextToSize(newThinking, pageWidth);
+                    doc.text(splitThinking, margin, currentY);
+                    currentY += splitThinking.length * 4 + 6;
+                    
+                    doc.text('구체적인 도움 방법:', margin, currentY);
+                    currentY += 4;
+                    const helpSuggestions = data.solutions.helpSuggestions || '(작성되지 않음)';
+                    const splitHelp = doc.splitTextToSize(helpSuggestions, pageWidth);
+                    doc.text(splitHelp, margin, currentY);
+                    currentY += splitHelp.length * 4 + 8;
+                    
+                    // 4단계: 격려하기
+                    doc.setFontSize(11);
+                    doc.text('🎁 4단계: 격려하기', margin, currentY);
+                    currentY += 8;
+                    
+                    doc.setFontSize(10);
+                    if (data.encouragement.drawn && data.encouragement.drawn !== '격려 메시지를 뽑아보세요! 🎁') {
+                        doc.text('격려 메시지:', margin, currentY);
+                        currentY += 4;
+                        const splitDrawn = doc.splitTextToSize(data.encouragement.drawn, pageWidth);
+                        doc.text(splitDrawn, margin, currentY);
+                        currentY += splitDrawn.length * 4 + 4;
+                    }
+                    
+                    doc.text('나만의 격려 메시지:', margin, currentY);
+                    currentY += 4;
+                    const personal = data.encouragement.personal || '(작성되지 않음)';
+                    const splitPersonal = doc.splitTextToSize(personal, pageWidth);
+                    doc.text(splitPersonal, margin, currentY);
+                    currentY += splitPersonal.length * 4 + 6;
+                    
+                    if (data.promise) {
+                        doc.text('🤝 앞으로 2주 동안 이 친구를 특별히 응원하고 도와줄게요!', margin, currentY);
+                        currentY += 8;
+                    }
+                    
+                    // 마무리 메시지
+                    doc.setFontSize(12);
+                    doc.text('🌟 친구를 도와줘서 정말 멋져요! 🌟', margin, currentY + 10);
+                    
+                    // PDF 다운로드
+                    doc.save(`ABC친구도우미_상담결과_${new Date().toISOString().split('T')[0]}.pdf`);
+                    
+                    this.showNotification('📄 PDF가 다운로드되었습니다!');
+                } catch (error) {
+                    console.error('PDF 생성 오류:', error);
+                    alert('PDF 생성에 실패했습니다. 다시 시도해주세요.');
+                }
             },
             
             // 새로운 상담 시작
