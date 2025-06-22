@@ -1000,6 +1000,34 @@
                 });
             },
 
+            // 키워드 기반 카테고리 자동 분류 함수 - 🎯 새로 추가된 핵심 기능
+            classifyCategory(text) {
+                const keywords = {
+                    '학교생활': ['시험', '성적', '발표', '공부', '숙제', '수업', '선생님', '학교', '점수', '등급', '교과', '모르겠', '어려워', '공부', '과제'],
+                    '친구관계': ['친구', '싸웠', '다퉜', '갈등', '따돌림', '놀리', '소외', '배신', '믿을', '사귀', '같이', '함께', '놀', '비밀'],
+                    '가족관계': ['부모님', '엄마', '아빠', '동생', '형', '누나', '언니', '가족', '집', '혼나', '형제', '자매', '할머니', '할아버지'],
+                    '감정과자신감': ['불안', '우울', '걱정', '두려', '자신감', '위축', '소심', '부끄러', '스트레스', '마음', '기분', '자존감', '우울']
+                };
+                
+                // 텍스트를 소문자로 변환하고 키워드 매칭
+                const lowerText = text.toLowerCase();
+                const scores = {};
+                
+                Object.entries(keywords).forEach(([category, wordList]) => {
+                    scores[category] = wordList.filter(keyword => 
+                        lowerText.includes(keyword)
+                    ).length;
+                });
+                
+                // 가장 많이 매칭된 카테고리 반환
+                const bestCategory = Object.entries(scores).reduce((a, b) => 
+                    scores[a[0]] > scores[b[0]] ? a : b
+                )[0];
+                
+                // 매칭된 키워드가 없으면 학교생활을 기본값으로
+                return scores[bestCategory] > 0 ? bestCategory : '학교생활';
+            },
+
             // 상황별 체크리스트 로드
             loadSituationBasedChecklists(category) {
                 // 카테고리 정규화
@@ -1352,7 +1380,7 @@
                 }
             },
             
-            // 직접 입력 저장
+            // 🎯 핵심 수정: 직접 입력 저장 - 키워드 기반 자동 분류 적용
             saveCustomSituation() {
                 const customA = document.getElementById('custom-a').value.trim();
                 const customB = document.getElementById('custom-b').value.trim();
@@ -1363,14 +1391,23 @@
                     return;
                 }
                 
+                // 🚀 핵심 개선: 입력된 텍스트를 기반으로 카테고리 자동 분류
+                const fullText = `${customA} ${customB} ${customC}`;
+                const detectedCategory = this.classifyCategory(fullText);
+                
                 this.state.selectedSituation = customA;
                 this.state.currentABC = { a: customA, b: customB, c: customC };
-                this.state.currentCategory = '기타';
+                this.state.currentCategory = detectedCategory; // 감지된 카테고리로 설정
                 
                 this.clearPreviousContent();
                 this.updateCurrentSituation();
-                // 기본 체크리스트 로드
-                this.loadSituationBasedChecklists('학교생활');
+                
+                // 🎯 감지된 카테고리의 체크리스트 로드 (기존의 무조건 '학교생활' 문제 해결!)
+                this.loadSituationBasedChecklists(detectedCategory);
+                
+                // 사용자에게 분류 결과 알림
+                this.showNotification(`💡 "${detectedCategory}" 카테고리로 분류되어 관련 도움말을 제공합니다!`);
+                
                 alert('✅ 고민이 저장되었어요! 이제 다음 단계로 넘어가세요.');
                 this.goToStep(1);
             },
@@ -2137,26 +2174,23 @@
                     // 현재 단계로 이동
                     this.goToStep(this.state.currentStep);
                     
-                    this.showNotification('✅ 이전 작업이 복원되었습니다');
+                    console.log('로컬 스토리지에서 복원 완료');
                 } catch (error) {
-                    console.error('복원 오류:', error);
-                    localStorage.removeItem('abc_friend_helper_data');
+                    console.error('로컬 스토리지 복원 오류:', error);
                 }
             },
             
             // 자동 저장
             autoSave() {
-                this.saveToLocalStorage();
+                if (this.state.selectedSituation || this.state.selectedEmotions.length > 0) {
+                    this.saveToLocalStorage();
+                }
             }
         };
         
-        // 전역 함수 등록
+        // 초기화 실행
         window.ABCHelper = ABCHelper;
-        
-        // DOM 로드 완료 시 초기화
-        document.addEventListener('DOMContentLoaded', () => {
-            ABCHelper.init();
-        });
+        ABCHelper.init();
     </script>
 </body>
 </html>
