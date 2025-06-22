@@ -154,6 +154,49 @@
         .step4-btn { background-color: var(--color-stage4); color: var(--color-stage4-dark); }
         .step4-btn.active { border-color: #f97316; }
 
+        /* 체크리스트 스타일 */
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+            margin-bottom: 4px;
+        }
+        
+        .checklist-item:hover {
+            background-color: rgba(139, 92, 246, 0.05);
+        }
+        
+        .checklist-item input[type="checkbox"] {
+            margin: 0;
+            width: auto;
+            min-width: 16px;
+            margin-top: 2px;
+        }
+        
+        .checklist-item label {
+            flex: 1;
+            cursor: pointer;
+            line-height: 1.4;
+            color: #4b5563;
+        }
+        
+        .checklist-section {
+            background: rgba(139, 92, 246, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .checklist-title {
+            font-weight: bold;
+            color: #7c3aed;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
         /* 애니메이션 */
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
@@ -474,6 +517,36 @@
                         <div class="mb-4">
                             <label class="font-bold text-purple-700 block mb-2">✨ 더 도움이 되는 생각 만들기:</label>
                             <p class="text-sm text-gray-600 mb-2">친구의 부정적인 생각을 긍정적인 생각으로 바꿔보세요</p>
+                            
+                            <!-- 새로운 생각 체크리스트 -->
+                            <div class="checklist-section">
+                                <div class="checklist-title">💭 이런 생각들을 참고해보세요:</div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="thinking-check-1" class="thinking-checkbox">
+                                    <label for="thinking-check-1">한 번의 실수나 실패가 전부는 아니야</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="thinking-check-2" class="thinking-checkbox">
+                                    <label for="thinking-check-2">모든 사람은 각자의 속도가 있어</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="thinking-check-3" class="thinking-checkbox">
+                                    <label for="thinking-check-3">실수는 배움의 기회가 될 수 있어</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="thinking-check-4" class="thinking-checkbox">
+                                    <label for="thinking-check-4">지금 힘들어도 시간이 지나면 나아질 거야</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="thinking-check-5" class="thinking-checkbox">
+                                    <label for="thinking-check-5">너는 충분히 노력하고 있어</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="thinking-check-6" class="thinking-checkbox">
+                                    <label for="thinking-check-6">완벽하지 않아도 괜찮아</label>
+                                </div>
+                            </div>
+                            
                             <textarea id="new-thinking" rows="3" class="w-full" placeholder="예: '한 번의 시험으로 모든 것이 결정되지 않아. 다음에 더 잘할 수 있어.'"></textarea>
                         </div>
                         
@@ -481,8 +554,55 @@
                         <div>
                             <label class="font-bold text-purple-700 block mb-2">🎯 구체적인 도움 방법:</label>
                             <p class="text-sm text-gray-600 mb-2">친구가 실제로 할 수 있는 행동을 제안해보세요</p>
+                            
+                            <!-- 도움 방법 체크리스트 -->
+                            <div class="checklist-section">
+                                <div class="checklist-title">🛠️ 이런 방법들을 추천해보세요:</div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="help-check-1" class="help-checkbox">
+                                    <label for="help-check-1">어려운 문제는 선생님이나 어른에게 도움 요청하기</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="help-check-2" class="help-checkbox">
+                                    <label for="help-check-2">매일 조금씩 연습하거나 공부하기</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="help-check-3" class="help-checkbox">
+                                    <label for="help-check-3">작은 목표부터 시작하기</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="help-check-4" class="help-checkbox">
+                                    <label for="help-check-4">친구나 가족과 이야기하기</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="help-check-5" class="help-checkbox">
+                                    <label for="help-check-5">성공한 경험이나 잘한 일 기록하기</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="help-check-6" class="help-checkbox">
+                                    <label for="help-check-6">스트레스 해소 방법 찾기 (운동, 취미 등)</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="help-check-7" class="help-checkbox">
+                                    <label for="help-check-7">충분한 휴식과 수면 취하기</label>
+                                </div>
+                                <div class="checklist-item">
+                                    <input type="checkbox" id="help-check-8" class="help-checkbox">
+                                    <label for="help-check-8">자신을 격려하는 말하기</label>
+                                </div>
+                            </div>
+                            
                             <textarea id="help-suggestions" rows="3" class="w-full" placeholder="예: 1) 어려운 문제는 선생님께 질문하기 2) 매일 15분씩 수학 문제 풀기"></textarea>
                         </div>
+                    </div>
+                    
+                    <div class="flex justify-center gap-4 mb-4">
+                        <button id="apply-thinking-checklist" class="bg-purple-500 hover:bg-purple-600 text-white font-bold px-4 py-2 rounded-lg btn-hover text-sm">
+                            📝 선택한 생각들 적용하기
+                        </button>
+                        <button id="apply-help-checklist" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold px-4 py-2 rounded-lg btn-hover text-sm">
+                            🎯 선택한 방법들 적용하기
+                        </button>
                     </div>
                     
                     <div class="flex justify-center">
@@ -762,6 +882,10 @@
                 this.addChangeListener('closing-select', () => this.updateEmpathyPreview());
                 this.addClickListener('auto-complete-empathy', () => this.autoCompleteEmpathy());
                 
+                // 체크리스트 적용 버튼
+                this.addClickListener('apply-thinking-checklist', () => this.applyThinkingChecklist());
+                this.addClickListener('apply-help-checklist', () => this.applyHelpChecklist());
+                
                 // 단계 이동
                 document.querySelectorAll('.step-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
@@ -803,6 +927,66 @@
                 
                 // 자동 저장
                 setInterval(() => this.autoSave(), 30000);
+            },
+            
+            // 체크리스트 적용 함수들
+            applyThinkingChecklist() {
+                const checkedItems = [];
+                document.querySelectorAll('.thinking-checkbox:checked').forEach(checkbox => {
+                    const label = document.querySelector(`label[for="${checkbox.id}"]`);
+                    if (label) {
+                        checkedItems.push(label.textContent);
+                    }
+                });
+                
+                if (checkedItems.length > 0) {
+                    const currentText = document.getElementById('new-thinking').value;
+                    const newText = checkedItems.join('. ') + '.';
+                    
+                    if (currentText.trim()) {
+                        document.getElementById('new-thinking').value = currentText + '\n\n' + newText;
+                    } else {
+                        document.getElementById('new-thinking').value = newText;
+                    }
+                    
+                    // 체크박스 초기화
+                    document.querySelectorAll('.thinking-checkbox').forEach(cb => cb.checked = false);
+                    
+                    this.showNotification('💭 선택한 생각들이 적용되었습니다!');
+                } else {
+                    this.showNotification('체크박스를 선택해주세요!');
+                }
+            },
+            
+            applyHelpChecklist() {
+                const checkedItems = [];
+                let counter = 1;
+                
+                document.querySelectorAll('.help-checkbox:checked').forEach(checkbox => {
+                    const label = document.querySelector(`label[for="${checkbox.id}"]`);
+                    if (label) {
+                        checkedItems.push(`${counter}) ${label.textContent}`);
+                        counter++;
+                    }
+                });
+                
+                if (checkedItems.length > 0) {
+                    const currentText = document.getElementById('help-suggestions').value;
+                    const newText = checkedItems.join('\n');
+                    
+                    if (currentText.trim()) {
+                        document.getElementById('help-suggestions').value = currentText + '\n\n' + newText;
+                    } else {
+                        document.getElementById('help-suggestions').value = newText;
+                    }
+                    
+                    // 체크박스 초기화
+                    document.querySelectorAll('.help-checkbox').forEach(cb => cb.checked = false);
+                    
+                    this.showNotification('🎯 선택한 방법들이 적용되었습니다!');
+                } else {
+                    this.showNotification('체크박스를 선택해주세요!');
+                }
             },
             
             // 이벤트 리스너 헬퍼
@@ -1460,6 +1644,15 @@
                                 <li>도움을 요청하기</li>
                                 <li>작은 목표부터 시작하기</li>
                                 <li>성공 경험을 기록하기</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-yellow-50 p-3 rounded-lg">
+                            <h4 class="font-bold text-yellow-600 mb-1">💡 체크리스트 활용 팁</h4>
+                            <ul class="text-sm text-gray-600 list-disc list-inside">
+                                <li>친구의 상황에 맞는 항목들을 선택하세요</li>
+                                <li>"적용하기" 버튼을 누르면 자동으로 텍스트가 입력됩니다</li>
+                                <li>필요에 따라 내용을 수정하거나 추가하세요</li>
                             </ul>
                         </div>
                     </div>
