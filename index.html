@@ -21,6 +21,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
+    <!-- 조용한 맞춤법 도우미 -->
+    <script src="js/silent-spell-helper.js"></script>
+    
     <!-- 한글 폰트 preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2150,81 +2153,59 @@
             // 알림 표시
             showNotification(message) {
                 const notification = document.getElementById('notification');
-                const text = document.getElementById('notification-text');
+                const notificationText = document.getElementById('notification-text');
                 
-                text.textContent = message;
+                notificationText.textContent = message;
                 notification.classList.add('show');
                 
                 setTimeout(() => {
                     notification.classList.remove('show');
-                }, 2000);
+                }, 3000);
             },
             
-            // 로컬 스토리지 저장
+            // 로컬 스토리지에 저장
             saveToLocalStorage() {
                 try {
-                    const data = {
+                    const dataToSave = {
                         state: this.state,
-                        formData: {
-                            counselorName: document.getElementById('counselor-name').value,
-                            clientName: document.getElementById('client-name').value,
-                            empathy: document.getElementById('empathy-text').value,
-                            newThinking: document.getElementById('new-thinking').value,
-                            helpSuggestions: document.getElementById('help-suggestions').value,
-                            personalEncouragement: document.getElementById('personal-encouragement').value,
-                            promise: document.getElementById('promise-checkbox').checked
-                        },
-                        timestamp: new Date().toISOString()
+                        timestamp: Date.now()
                     };
-                    
-                    localStorage.setItem('abc_friend_helper_data', JSON.stringify(data));
+                    localStorage.setItem('abc_friend_helper_data', JSON.stringify(dataToSave));
                 } catch (error) {
-                    console.error('저장 오류:', error);
+                    console.error('로컬 스토리지 저장 실패:', error);
                 }
             },
             
-            // 로컬 스토리지에서 복원
+            // 로컬 스토리지에서 복원 (24시간)
             restoreFromLocalStorage() {
                 try {
                     const savedData = localStorage.getItem('abc_friend_helper_data');
                     if (!savedData) return;
                     
-                    const data = JSON.parse(savedData);
+                    const { state, timestamp } = JSON.parse(savedData);
+                    const hoursPassed = (Date.now() - timestamp) / (1000 * 60 * 60);
                     
-                    // 24시간 이상 지난 데이터는 무시
-                    const savedTime = new Date(data.timestamp);
-                    const now = new Date();
-                    const hoursDiff = (now - savedTime) / (1000 * 60 * 60);
-                    
-                    if (hoursDiff > 24) {
+                    if (hoursPassed > 24) {
                         localStorage.removeItem('abc_friend_helper_data');
                         return;
                     }
                     
                     // 상태 복원
-                    if (data.state) {
-                        Object.assign(this.state, data.state);
+                    Object.assign(this.state, state);
+                    
+                    // UI 복원
+                    if (this.state.selectedSituation) {
+                        document.getElementById('worry-select').value = this.state.selectedSituation;
+                        this.selectWorry(this.state.selectedSituation);
                     }
                     
-                    // 폼 데이터 복원
-                    if (data.formData) {
-                        const form = data.formData;
-                        if (form.counselorName) document.getElementById('counselor-name').value = form.counselorName;
-                        if (form.clientName) document.getElementById('client-name').value = form.clientName;
-                        if (form.empathy) document.getElementById('empathy-text').value = form.empathy;
-                        if (form.newThinking) document.getElementById('new-thinking').value = form.newThinking;
-                        if (form.helpSuggestions) document.getElementById('help-suggestions').value = form.helpSuggestions;
-                        if (form.personalEncouragement) document.getElementById('personal-encouragement').value = form.personalEncouragement;
-                        if (form.promise) document.getElementById('promise-checkbox').checked = form.promise;
-                    }
+                    this.state.selectedEmotions.forEach(emotion => {
+                        this.toggleEmotion(emotion, true);
+                    });
                     
-                    // UI 업데이트
-                    this.updateSelectedEmotions();
-                    this.updateCurrentSituation();
-                    
-                    console.log('데이터가 복원되었습니다');
                 } catch (error) {
-                    console.error('복원 오류:', error);
+                    console.error('로컬 스토리지 복원 실패:', error);
+                    localStorage.removeItem('abc_friend_helper_data');
                 }
             },
             
@@ -2234,13 +2215,11 @@
             }
         };
         
-        // 전역 네임스페이스에 등록 (HTML에서 호출하기 위해)
+        // 전역 노출
         window.ABCHelper = ABCHelper;
         
-        // 페이지 로드 시 초기화
-        document.addEventListener('DOMContentLoaded', () => {
-            ABCHelper.init();
-        });
+        // 초기화
+        ABCHelper.init();
     </script>
 </body>
 </html>
