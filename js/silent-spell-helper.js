@@ -43,7 +43,8 @@ class SilentSpellHelper {
             'empathy': { enabled: false }, // 감정 공감: 수정 안함
             'expression': { enabled: true, gentle: true }, // 공감 표현: 매우 조심스럽게
             'solution': { enabled: true, gentle: false }, // 해결방안: 일반적으로
-            'encouragement': { enabled: false } // 격려: 수정 안함
+            'encouragement': { enabled: false }, // 격려: 수정 안함
+            'general': { enabled: true, gentle: true } // 일반: 조심스럽게
         };
     }
     
@@ -156,22 +157,31 @@ class SilentSpellHelper {
     }
     
     /**
-     * ABC 친구 도우미의 입력 요소들에 적용
+     * ABC 친구 도우미의 입력 요소들에 적용 - 🔧 수정됨
      */
     attachToElements() {
-        // 기존 프로젝트의 입력 요소들 찾기
+        // 실제 HTML 요소들과 매칭되는 셀렉터로 수정
         const inputs = document.querySelectorAll(`
-            textarea[name="worry"],
-            textarea[name="empathy"], 
-            textarea[name="expression"],
-            textarea[name="solution"],
-            textarea[name="encouragement"],
-            input[type="text"][name*="friend"],
-            textarea.worry-input,
-            textarea.solution-input
+            #empathy-text,
+            #new-thinking,
+            #help-suggestions,
+            #personal-encouragement,
+            #counselor-name,
+            #client-name,
+            #custom-a,
+            #custom-b,
+            #custom-c,
+            #custom-emotion
         `);
         
-        inputs.forEach(element => this.setupElement(element));
+        console.log(`🤫 조용한 맞춤법 도우미: ${inputs.length}개 요소에 적용됩니다.`);
+        
+        inputs.forEach(element => {
+            if (element) {
+                this.setupElement(element);
+                console.log(`✅ 적용됨: ${element.id || element.tagName}`);
+            }
+        });
     }
     
     /**
@@ -208,20 +218,22 @@ class SilentSpellHelper {
     }
     
     /**
-     * 현재 상담 단계 감지
+     * 현재 상담 단계 감지 - 🔧 수정됨
      */
     detectStep(element) {
-        const name = element.name || element.className || '';
+        const id = element.id;
         
-        if (name.includes('empathy') || name.includes('emotion')) return 'empathy';
-        if (name.includes('expression') || name.includes('share')) return 'expression';
-        if (name.includes('solution') || name.includes('help')) return 'solution';
-        if (name.includes('encouragement') || name.includes('support')) return 'encouragement';
+        // ID 기반 단계 감지
+        if (id === 'empathy-text') return 'expression';
+        if (id === 'new-thinking' || id === 'help-suggestions') return 'solution';
+        if (id === 'personal-encouragement') return 'encouragement';
+        if (['counselor-name', 'client-name', 'custom-emotion'].includes(id)) return 'general';
+        if (['custom-a', 'custom-b', 'custom-c'].includes(id)) return 'empathy';
         
         // 부모 요소에서 단계 정보 찾기
-        const section = element.closest('[data-step], .step-1, .step-2, .step-3, .step-4');
+        const section = element.closest('#step1, #step2, #step3, #step4');
         if (section) {
-            const stepNum = section.dataset.step || section.className.match(/step-(\d)/)?.[1];
+            const stepNum = section.id.replace('step', '');
             switch(stepNum) {
                 case '1': return 'empathy';
                 case '2': return 'expression';
@@ -263,23 +275,40 @@ class SilentSpellHelper {
 // 전역 인스턴스 생성
 const silentHelper = new SilentSpellHelper();
 
-// ABC 친구 도우미와 통합
+// ABC 친구 도우미와 통합 - 🔧 수정됨
 function initSilentSpellHelper() {
-    // DOM이 로드된 후 실행
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
+    // DOM이 로드된 후와 ABCHelper 초기화 후 실행
+    function tryAttach() {
+        // ABCHelper가 있고 초기화된 후에만 실행
+        if (typeof ABCHelper !== 'undefined') {
             silentHelper.attachToElements();
-        });
-    } else {
-        silentHelper.attachToElements();
+            console.log('🤫 조용한 맞춤법 도우미가 ABCHelper와 연동되었습니다.');
+        } else {
+            // ABCHelper가 아직 없으면 잠시 후 재시도
+            setTimeout(tryAttach, 1000);
+        }
     }
     
-    // 동적으로 추가되는 요소들 감지
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', tryAttach);
+    } else {
+        tryAttach();
+    }
+    
+    // 동적으로 추가되는 요소들 감지 - 🔧 수정됨
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
                 if (node.nodeType === 1) { // Element node
-                    const inputs = node.querySelectorAll('textarea, input[type="text"]');
+                    // 특정 요소들만 감지하도록 최적화
+                    const inputs = node.querySelectorAll(`
+                        textarea[id*="empathy"],
+                        textarea[id*="thinking"], 
+                        textarea[id*="suggestions"],
+                        textarea[id*="encouragement"],
+                        input[id*="name"],
+                        textarea[id*="custom"]
+                    `);
                     inputs.forEach(input => silentHelper.setupElement(input));
                 }
             });
@@ -303,15 +332,18 @@ function toggleSilentHelper(enabled = !silentHelper.enabled) {
     console.log(`조용한 맞춤법 도우미: ${enabled ? '활성화' : '비활성화'}`);
 }
 
-// 자동 초기화
-initSilentSpellHelper();
+// 🔧 수정된 초기화 - 지연 실행으로 안정성 확보
+setTimeout(() => {
+    initSilentSpellHelper();
+}, 2000); // 2초 후 초기화 (ABCHelper 초기화 완료 대기)
 
 // 개발자용 전역 접근
 window.silentSpellHelper = {
     instance: silentHelper,
     toggle: toggleSilentHelper,
     resetSession: startNewCounseling,
-    stats: () => silentHelper.getStats()
+    stats: () => silentHelper.getStats(),
+    attachNow: () => silentHelper.attachToElements() // 수동 연결용
 };
 
 console.log('🤫 조용한 맞춤법 도우미가 준비되었습니다. 상담에 집중하세요!');
