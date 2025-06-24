@@ -1000,7 +1000,7 @@
                 });
             },
 
-            // 키워드 기반 카테고리 자동 분류 함수 - 🎯 새로 추가된 핵심 기능
+            // 키워드 기반 카테고리 자동 분류 함수
             classifyCategory(text) {
                 const keywords = {
                     '학교생활': ['시험', '성적', '발표', '공부', '숙제', '수업', '선생님', '학교', '점수', '등급', '교과', '모르겠', '어려워', '공부', '과제'],
@@ -1009,7 +1009,6 @@
                     '감정과자신감': ['불안', '우울', '걱정', '두려', '자신감', '위축', '소심', '부끄러', '스트레스', '마음', '기분', '자존감', '우울']
                 };
                 
-                // 텍스트를 소문자로 변환하고 키워드 매칭
                 const lowerText = text.toLowerCase();
                 const scores = {};
                 
@@ -1019,18 +1018,15 @@
                     ).length;
                 });
                 
-                // 가장 많이 매칭된 카테고리 반환
                 const bestCategory = Object.entries(scores).reduce((a, b) => 
                     scores[a[0]] > scores[b[0]] ? a : b
                 )[0];
                 
-                // 매칭된 키워드가 없으면 학교생활을 기본값으로
                 return scores[bestCategory] > 0 ? bestCategory : '학교생활';
             },
 
             // 상황별 체크리스트 로드
             loadSituationBasedChecklists(category) {
-                // 카테고리 정규화
                 const normalizedCategory = category?.replace(/\s+/g, '') || '학교생활';
                 const checklistData = this.data.situationBasedChecklists[normalizedCategory] || this.data.situationBasedChecklists['학교생활'];
                 
@@ -1102,8 +1098,18 @@
                     });
                 });
                 
-                // 다음/이전 버튼
-                this.addClickListener('next-to-step2', () => this.goToStep(2));
+                // 다음/이전 버튼 - 🔧 수정: 2단계 이동 시 추가 안전장치
+                this.addClickListener('next-to-step2', () => {
+                    if (this.state.selectedEmotions.length === 0) {
+                        alert('친구의 감정을 먼저 선택해주세요!');
+                        return;
+                    }
+                    this.goToStep(2);
+                    // 🔧 추가 안전장치: 한번 더 업데이트
+                    setTimeout(() => {
+                        this.updateCurrentSituation();
+                    }, 200);
+                });
                 this.addClickListener('back-to-step1', () => this.goToStep(1));
                 this.addClickListener('next-to-step3', () => this.goToStep(3));
                 this.addClickListener('back-to-step2', () => this.goToStep(2));
@@ -1226,7 +1232,7 @@
                 }
             },
             
-            // 고민 선택
+            // 🔧 수정: 고민 선택 - 상태 설정 개선
             selectWorry(worry) {
                 if (!worry) {
                     document.getElementById('selected-worry-abc').classList.add('hidden');
@@ -1246,12 +1252,18 @@
                     document.getElementById('selected-c').textContent = abc.c;
                     document.getElementById('selected-worry-abc').classList.remove('hidden');
                     
+                    // 🔧 수정: 상태 설정 순서 최적화
                     this.state.selectedSituation = worry;
-                    this.state.currentABC = abc;
+                    this.state.currentABC = { ...abc }; // 깊은 복사로 안전성 보장
                     this.state.currentCategory = category;
+                    
+                    console.log('고민 선택됨:', worry);
+                    console.log('ABC 설정됨:', this.state.currentABC);
                     
                     this.clearPreviousContent();
                     this.autoSelectEmotions(worry);
+                    
+                    // 🔧 수정: 즉시 현재 상황 업데이트
                     this.updateCurrentSituation();
                     
                     // 3단계에 상황별 체크리스트 로드
@@ -1259,20 +1271,31 @@
                 }
             },
 
-            // 현재 상황 업데이트 - 2단계에서 표시
+            // 🔧 수정: 현재 상황 업데이트 - 개선된 버전
             updateCurrentSituation() {
                 const display = document.getElementById('auto-situation-display');
-                const currentSituation = this.state.currentABC.a || '먼저 고민을 선택하거나 입력해주세요.';
                 
-                if (display) {
-                    display.textContent = currentSituation;
-                    display.className = this.state.currentABC.a ? 
-                        'bg-orange-50 p-2 rounded text-orange-700 text-sm' : 
-                        'bg-red-50 p-2 rounded text-red-700 text-sm';
+                // 🔧 수정: 더 상세한 디버깅과 안전장치
+                console.log('updateCurrentSituation 호출됨');
+                console.log('현재 ABC:', this.state.currentABC);
+                console.log('display 요소:', display);
+                
+                if (!display) {
+                    console.error('auto-situation-display 요소를 찾을 수 없습니다');
+                    return;
                 }
+                
+                const currentSituation = this.state.currentABC?.a || '먼저 고민을 선택하거나 입력해주세요.';
+                
+                display.textContent = currentSituation;
+                display.className = this.state.currentABC?.a ? 
+                    'bg-orange-50 p-2 rounded text-orange-700 text-sm' : 
+                    'bg-red-50 p-2 rounded text-red-700 text-sm';
                 
                 // 공감 표현 미리보기도 업데이트
                 this.updateEmpathyPreview();
+                
+                console.log('현재 상황 표시 완료:', currentSituation);
             },
             
             // 이전 내용 초기화
@@ -1380,7 +1403,7 @@
                 }
             },
             
-            // 🎯 핵심 수정: 직접 입력 저장 - 키워드 기반 자동 분류 적용
+            // 🔧 수정: 직접 입력 저장 - 상태 설정 개선
             saveCustomSituation() {
                 const customA = document.getElementById('custom-a').value.trim();
                 const customB = document.getElementById('custom-b').value.trim();
@@ -1391,18 +1414,29 @@
                     return;
                 }
                 
-                // 🚀 핵심 개선: 입력된 텍스트를 기반으로 카테고리 자동 분류
+                // 입력된 텍스트를 기반으로 카테고리 자동 분류
                 const fullText = `${customA} ${customB} ${customC}`;
                 const detectedCategory = this.classifyCategory(fullText);
                 
+                // 🔧 수정: 상태 설정 개선
                 this.state.selectedSituation = customA;
-                this.state.currentABC = { a: customA, b: customB, c: customC };
-                this.state.currentCategory = detectedCategory; // 감지된 카테고리로 설정
+                this.state.currentABC = { 
+                    a: customA, 
+                    b: customB, 
+                    c: customC 
+                };
+                this.state.currentCategory = detectedCategory;
+                
+                console.log('직접 입력 저장됨');
+                console.log('ABC:', this.state.currentABC);
+                console.log('카테고리:', detectedCategory);
                 
                 this.clearPreviousContent();
+                
+                // 🔧 수정: 즉시 현재 상황 업데이트
                 this.updateCurrentSituation();
                 
-                // 🎯 감지된 카테고리의 체크리스트 로드 (기존의 무조건 '학교생활' 문제 해결!)
+                // 감지된 카테고리의 체크리스트 로드
                 this.loadSituationBasedChecklists(detectedCategory);
                 
                 // 사용자에게 분류 결과 알림
@@ -1486,7 +1520,7 @@
                 }, 2000);
             },
             
-            // 단계 이동
+            // 🔧 수정: 단계 이동 - DOM 업데이트 타이밍 개선
             goToStep(step) {
                 this.state.currentStep = step;
                 
@@ -1522,9 +1556,12 @@
                 
                 this.updateStepButtons();
                 
-                // 2단계 특별 처리 - 현재 상황 업데이트
+                // 🔧 수정: 2단계 특별 처리 - 지연 호출로 DOM 업데이트 보장
                 if (step === 2) {
-                    this.updateCurrentSituation();
+                    setTimeout(() => {
+                        this.updateCurrentSituation();
+                        console.log('2단계 현재 상황:', this.state.currentABC.a); // 디버깅용
+                    }, 100);
                 }
 
                 // 3단계 특별 처리 - 체크리스트 로드
@@ -1550,6 +1587,24 @@
                         }
                     }
                 });
+            },
+
+            // 🔧 추가: 디버깅을 위한 상태 확인 함수
+            checkState() {
+                console.log('=== ABC Helper 상태 확인 ===');
+                console.log('현재 단계:', this.state.currentStep);
+                console.log('선택된 상황:', this.state.selectedSituation);
+                console.log('현재 ABC:', this.state.currentABC);
+                console.log('현재 카테고리:', this.state.currentCategory);
+                console.log('선택된 감정:', this.state.selectedEmotions);
+                
+                // DOM 요소 확인
+                const display = document.getElementById('auto-situation-display');
+                if (display) {
+                    console.log('auto-situation-display 내용:', display.textContent);
+                } else {
+                    console.error('auto-situation-display 요소를 찾을 수 없음');
+                }
             },
             
             // 격려 메시지 뽑기
@@ -2147,50 +2202,45 @@
                     }
                     
                     // 상태 복원
-                    this.state = { ...this.state, ...data.state };
+                    if (data.state) {
+                        Object.assign(this.state, data.state);
+                    }
                     
                     // 폼 데이터 복원
-                    if (data.formData.counselorName) document.getElementById('counselor-name').value = data.formData.counselorName;
-                    if (data.formData.clientName) document.getElementById('client-name').value = data.formData.clientName;
-                    if (data.formData.empathy) document.getElementById('empathy-text').value = data.formData.empathy;
-                    if (data.formData.newThinking) document.getElementById('new-thinking').value = data.formData.newThinking;
-                    if (data.formData.helpSuggestions) document.getElementById('help-suggestions').value = data.formData.helpSuggestions;
-                    if (data.formData.personalEncouragement) document.getElementById('personal-encouragement').value = data.formData.personalEncouragement;
-                    if (data.formData.promise) document.getElementById('promise-checkbox').checked = data.formData.promise;
+                    if (data.formData) {
+                        const form = data.formData;
+                        if (form.counselorName) document.getElementById('counselor-name').value = form.counselorName;
+                        if (form.clientName) document.getElementById('client-name').value = form.clientName;
+                        if (form.empathy) document.getElementById('empathy-text').value = form.empathy;
+                        if (form.newThinking) document.getElementById('new-thinking').value = form.newThinking;
+                        if (form.helpSuggestions) document.getElementById('help-suggestions').value = form.helpSuggestions;
+                        if (form.personalEncouragement) document.getElementById('personal-encouragement').value = form.personalEncouragement;
+                        if (form.promise) document.getElementById('promise-checkbox').checked = form.promise;
+                    }
                     
                     // UI 업데이트
                     this.updateSelectedEmotions();
                     this.updateCurrentSituation();
-                    document.querySelectorAll('.emotion-btn').forEach(btn => {
-                        if (this.state.selectedEmotions.includes(btn.textContent)) {
-                            btn.classList.add('selected');
-                        }
-                    });
                     
-                    // 체크리스트 로드
-                    const category = this.state.currentCategory || '학교생활';
-                    this.loadSituationBasedChecklists(category);
-                    
-                    // 현재 단계로 이동
-                    this.goToStep(this.state.currentStep);
-                    
-                    console.log('로컬 스토리지에서 복원 완료');
+                    console.log('데이터가 복원되었습니다');
                 } catch (error) {
-                    console.error('로컬 스토리지 복원 오류:', error);
+                    console.error('복원 오류:', error);
                 }
             },
             
             // 자동 저장
             autoSave() {
-                if (this.state.selectedSituation || this.state.selectedEmotions.length > 0) {
-                    this.saveToLocalStorage();
-                }
+                this.saveToLocalStorage();
             }
         };
         
-        // 초기화 실행
+        // 전역 네임스페이스에 등록 (HTML에서 호출하기 위해)
         window.ABCHelper = ABCHelper;
-        ABCHelper.init();
+        
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            ABCHelper.init();
+        });
     </script>
 </body>
 </html>
